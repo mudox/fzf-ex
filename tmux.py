@@ -8,6 +8,18 @@ from subprocess import check_output
 from subprocess import call
 
 
+def prefix_style(text):
+  return '\x1b[38;2;100;100;100m%s\x1b[0m' % text
+
+
+def session_style(name):
+  return '\x1b[33m%s\x1b[0m' % name
+
+
+def window_style(name):
+  return '\x1b[35m%s\x1b[0m' % name
+
+
 class Tmux(object):
 
   """The tmux object"""
@@ -16,11 +28,8 @@ class Tmux(object):
     self.tmux_client = check_output(
       ['tmux', 'list-clients', '-F', '#{client_tty}'],
       universal_newlines=True,
-      ).strip()
+    ).strip()
 
-    self.init_tree()
-
-  def init_tree(self):
     # get session list
     sessions = check_output(
       ['tmux', 'list-session', '-F', '#{session_name}'],
@@ -61,7 +70,7 @@ class Tmux(object):
           '-t',
           session,
         ])
-      lines.append('{} {}'.format(session, count))
+      lines.append('{} {}'.format(session_style(session), count))
 
       index = 0
       for window in windows:
@@ -77,9 +86,13 @@ class Tmux(object):
             '{}:{}'.format(session, window),
           ])
         if len(windows) == index:
-          lines.append('└─ {} {}'.format(window, count))
+          lines.append(
+            '{} {} {}'.format(prefix_style('└─'), window_style(window), count),
+          )
         else:
-          lines.append('├─ {} {}'.format(window, count))
+          lines.append(
+            '{} {} {}'.format(prefix_style('├─'), window_style(window), count),
+          )
 
     self.fzf_lines = '\n'.join(lines)
 
